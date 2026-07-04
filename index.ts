@@ -59,7 +59,7 @@ function expandAtRefs(content: string, baseDir: string, depth = 0): string {
 function replaceBlockContent(prompt: string, filePath: string, newContent: string): string {
 	const open = `<project_instructions path="${filePath}">\n`;
 	const close = "\n</project_instructions>";
-	const regex = new RegExp(escapeRegex(open) + "[\\s\\S]*?" + escapeRegex(close));
+	const regex = new RegExp(`(${escapeRegex(open)})[\\s\\S]*?(${escapeRegex(close)})`);
 	return prompt.replace(regex, (_match, openTag, closeTag) => `${openTag}${newContent}${closeTag}`);
 }
 
