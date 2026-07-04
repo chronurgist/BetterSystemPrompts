@@ -1,4 +1,5 @@
 *
 
 !.gitignore
-!agents-local-support/
+!index.ts
+!package.json
