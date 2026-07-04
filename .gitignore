@@ -3,3 +3,6 @@
 !.gitignore
 !index.ts
 !package.json
+!lib.ts
+!lib.test.ts
+!vitest.config.ts
