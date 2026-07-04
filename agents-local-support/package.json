@@ -1,0 +1,7 @@
+{
+  "name": "agents-local-support",
+  "private": true,
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.80.3"
+  }
+}
