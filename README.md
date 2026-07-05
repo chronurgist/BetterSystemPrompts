@@ -56,6 +56,12 @@ For a more complete Claude Code-style experience, pair this with:
 
 ## Install
 
+From GitHub:
+
+```bash
+pi install git:github.com/chronurgist/BetterSystemPrompts
+```
+
 From a local checkout:
 
 ```bash
@@ -65,7 +71,7 @@ pi install ./path/to/agents-local-support
 Or try it for one run:
 
 ```bash
-pi -e ./path/to/agents-local-support
+pi -e git:github.com/chronurgist/BetterSystemPrompts
 ```
 
 ## Development
