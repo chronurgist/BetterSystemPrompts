@@ -96,9 +96,11 @@ describe("agentsLocalSupportExtension", () => {
     expect(result?.systemPrompt).not.toContain("hidden");
   });
 
-  it("strips HTML comments from loaded context files", async () => {
+  it("preserves HTML comments in loaded context files", async () => {
+    const refPath = join(testDir, "ref.txt");
+    writeFileSync(refPath, "expanded-ref");
     const agentsPath = join(testDir, "AGENTS.md");
-    const content = "project <!-- hidden --> instructions";
+    const content = "project <!-- hidden --> @ref.txt instructions";
 
     const result = await handler({
       systemPrompt: `<project_instructions path="${agentsPath}">\n${content}\n</project_instructions>`,
@@ -108,8 +110,9 @@ describe("agentsLocalSupportExtension", () => {
       },
     });
 
-    expect(result?.systemPrompt).toContain("project  instructions");
-    expect(result?.systemPrompt).not.toContain("hidden");
+    expect(result?.systemPrompt).toContain("<!-- hidden -->");
+    expect(result?.systemPrompt).toContain("expanded-ref");
+    expect(result?.systemPrompt).not.toContain("@ref.txt");
   });
 
   it("warns when AGENTS.local.md exceeds 200 lines", async () => {

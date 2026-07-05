@@ -110,9 +110,8 @@ function expandInlineRefs(
       const rawRefContent = readFileSync(resolvedPath, "utf-8");
       const warning = largeFileWarning(resolvedPath, rawRefContent);
       if (warning) console.warn(warning);
-      const refContent = stripHtmlComments(rawRefContent);
       const expanded = expandAtRefs(
-        refContent,
+        rawRefContent,
         dirname(resolvedPath),
         depth + 1,
       );

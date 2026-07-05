@@ -47,8 +47,7 @@ export default function agentsLocalSupportExtension(
     let systemPrompt = event.systemPrompt;
 
     for (const file of contextFiles) {
-      const stripped = stripHtmlComments(file.content);
-      const expanded = expandAtRefs(stripped, dirname(file.path));
+      const expanded = expandAtRefs(file.content, dirname(file.path));
       if (expanded !== file.content) {
         systemPrompt = replaceBlockContent(systemPrompt, file.path, expanded);
       }
