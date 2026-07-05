@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import agentsLocalSupportExtension from "./index";
-import { captureWarningsAsync } from "./test-helpers";
+import { captureWarnings } from "./test-helpers";
 
 type BeforeAgentStartHandler = (event: {
   systemPrompt: string;
@@ -121,7 +121,7 @@ describe("agentsLocalSupportExtension", () => {
       localPath,
       Array.from({ length: 201 }, () => "line").join("\n"),
     );
-    const { warnings } = await captureWarningsAsync(() =>
+    const { warnings } = await captureWarnings(() =>
       handler({
         systemPrompt: "base prompt",
         systemPromptOptions: { cwd: testDir, contextFiles: [] },

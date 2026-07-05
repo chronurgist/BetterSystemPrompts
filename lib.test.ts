@@ -180,13 +180,13 @@ describe("expandAtRefs", () => {
     );
   });
 
-  it("warns when an inlined reference exceeds 200 lines", () => {
+  it("warns when an inlined reference exceeds 200 lines", async () => {
     const refPath = join(testDir, "large_ref.txt");
     writeFileSync(
       refPath,
       Array.from({ length: 201 }, () => "line").join("\n"),
     );
-    const { warnings } = captureWarnings(() =>
+    const { warnings } = await captureWarnings(() =>
       expandAtRefs(`@${refPath}`, testDir),
     );
 
