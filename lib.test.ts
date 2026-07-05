@@ -180,6 +180,29 @@ describe("expandAtRefs", () => {
     writeFileSync(refPath, "visible <!-- hidden --> text");
     expect(expandAtRefs(`@${refPath}`, testDir)).toBe("visible  text");
   });
+
+  it("warns when an inlined reference exceeds 200 lines", () => {
+    const refPath = join(testDir, "large_ref.txt");
+    writeFileSync(
+      refPath,
+      Array.from({ length: 201 }, () => "line").join("\n"),
+    );
+    const originalWarn = console.warn;
+    const warnings: unknown[][] = [];
+    console.warn = (...args: unknown[]) => warnings.push(args);
+
+    try {
+      expandAtRefs(`@${refPath}`, testDir);
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    expect(warnings).toEqual([
+      [
+        `[better-system-prompts] ${refPath} has 201 lines (>200). Consider splitting into smaller files.`,
+      ],
+    ]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -203,7 +226,9 @@ describe("stripHtmlComments", () => {
 
   it("preserves HTML comments inside fenced code blocks", () => {
     const input = "Before\n```\n<!-- keep -->\n```\nAfter <!-- drop -->";
-    expect(stripHtmlComments(input)).toBe("Before\n```\n<!-- keep -->\n```\nAfter ");
+    expect(stripHtmlComments(input)).toBe(
+      "Before\n```\n<!-- keep -->\n```\nAfter ",
+    );
   });
 });
 

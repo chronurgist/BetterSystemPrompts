@@ -81,7 +81,10 @@ describe("agentsLocalSupportExtension", () => {
   });
 
   it("strips HTML comments from AGENTS.local.md", async () => {
-    writeFileSync(join(testDir, "AGENTS.local.md"), "visible <!-- hidden --> text");
+    writeFileSync(
+      join(testDir, "AGENTS.local.md"),
+      "visible <!-- hidden --> text",
+    );
 
     const result = await handler({
       systemPrompt: "base prompt",
@@ -106,5 +109,31 @@ describe("agentsLocalSupportExtension", () => {
 
     expect(result?.systemPrompt).toContain("project  instructions");
     expect(result?.systemPrompt).not.toContain("hidden");
+  });
+
+  it("warns when AGENTS.local.md exceeds 200 lines", async () => {
+    const localPath = join(testDir, "AGENTS.local.md");
+    writeFileSync(
+      localPath,
+      Array.from({ length: 201 }, () => "line").join("\n"),
+    );
+    const originalWarn = console.warn;
+    const warnings: unknown[][] = [];
+    console.warn = (...args: unknown[]) => warnings.push(args);
+
+    try {
+      await handler({
+        systemPrompt: "base prompt",
+        systemPromptOptions: { cwd: testDir, contextFiles: [] },
+      });
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    expect(warnings).toEqual([
+      [
+        `[better-system-prompts] ${localPath} has 201 lines (>200). Consider splitting into smaller files.`,
+      ],
+    ]);
   });
 });

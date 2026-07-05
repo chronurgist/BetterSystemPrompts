@@ -8,6 +8,7 @@ import {
   insertAfterBlock,
   replaceBlockContent,
   stripHtmlComments,
+  warnIfLarge,
 } from "./lib";
 
 const LOCAL_FILENAME = "AGENTS.local.md";
@@ -36,6 +37,7 @@ export default function agentsLocalSupportExtension(pi: ExtensionAPI): void {
 
       try {
         const raw = readFileSync(localPath, "utf-8");
+        warnIfLarge(localPath, raw);
         const stripped = stripHtmlComments(raw);
         const expanded = expandAtRefs(stripped, dirname(localPath));
         const block = buildLocalBlock(localPath, expanded);

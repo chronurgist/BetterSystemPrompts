@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import { dirname, isAbsolute, join, parse, resolve } from "node:path";
 
 export const MAX_DEPTH = 4;
+export const SIZE_WARNING_THRESHOLD = 200;
 
 export interface ContextFile {
   path: string;
@@ -22,7 +23,18 @@ export function resolveRefPath(refPath: string, baseDir: string): string {
 }
 
 export function stripHtmlComments(content: string): string {
-  return mapProseSegments(content, (text) => text.replace(/<!--[\s\S]*?-->/g, ""));
+  return mapProseSegments(content, (text) =>
+    text.replace(/<!--[\s\S]*?-->/g, ""),
+  );
+}
+
+export function warnIfLarge(filePath: string, content: string): void {
+  const lineCount = content.split("\n").length;
+  if (lineCount > SIZE_WARNING_THRESHOLD) {
+    console.warn(
+      `[better-system-prompts] ${filePath} has ${lineCount} lines (>200). Consider splitting into smaller files.`,
+    );
+  }
 }
 
 function mapProseSegments(
@@ -52,7 +64,9 @@ function mapProseSegments(
   }
 
   return segments
-    .map((segment) => (segment.inFence ? segment.text : transform(segment.text)))
+    .map((segment) =>
+      segment.inFence ? segment.text : transform(segment.text),
+    )
     .join("");
 }
 
@@ -84,7 +98,11 @@ export function expandAtRefs(
   return result.join("\n");
 }
 
-function expandInlineRefs(text: string, baseDir: string, depth: number): string {
+function expandInlineRefs(
+  text: string,
+  baseDir: string,
+  depth: number,
+): string {
   const backtickRanges = inlineBacktickRanges(text);
   const isInsideBacktick = (position: number) =>
     backtickRanges.some(([start, end]) => position >= start && position < end);
@@ -92,9 +110,7 @@ function expandInlineRefs(text: string, baseDir: string, depth: number): string 
   const refRegex = /@(\S+)/g;
   let result = "";
   let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = refRegex.exec(text)) !== null) {
+  for (const match of text.matchAll(refRegex)) {
     if (isInsideBacktick(match.index)) continue;
 
     const refPath = match[1];
@@ -102,8 +118,14 @@ function expandInlineRefs(text: string, baseDir: string, depth: number): string 
     if (!existsSync(resolvedPath)) continue;
 
     try {
-      const refContent = stripHtmlComments(readFileSync(resolvedPath, "utf-8"));
-      const expanded = expandAtRefs(refContent, dirname(resolvedPath), depth + 1);
+      const rawRefContent = readFileSync(resolvedPath, "utf-8");
+      warnIfLarge(resolvedPath, rawRefContent);
+      const refContent = stripHtmlComments(rawRefContent);
+      const expanded = expandAtRefs(
+        refContent,
+        dirname(resolvedPath),
+        depth + 1,
+      );
       result += text.slice(lastIndex, match.index) + expanded;
       lastIndex = match.index + match[0].length;
     } catch {
@@ -117,9 +139,7 @@ function expandInlineRefs(text: string, baseDir: string, depth: number): string 
 function inlineBacktickRanges(text: string): Array<[number, number]> {
   const ranges: Array<[number, number]> = [];
   const backtickRegex = /`[^`]*`/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = backtickRegex.exec(text)) !== null) {
+  for (const match of text.matchAll(backtickRegex)) {
     ranges.push([match.index, match.index + match[0].length]);
   }
 
