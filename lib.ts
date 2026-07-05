@@ -34,30 +34,54 @@ export function expandAtRefs(
       continue;
     }
 
-    const match = line.trim().match(/^@(\S+)$/);
-    if (!match) {
-      result.push(line);
-      continue;
-    }
+    result.push(expandInlineRefs(line, baseDir, depth));
+  }
+
+  return result.join("\n");
+}
+
+function expandInlineRefs(text: string, baseDir: string, depth: number): string {
+  const backtickRanges = inlineBacktickRanges(text);
+  const isInsideBacktick = (position: number) =>
+    backtickRanges.some(([start, end]) => position >= start && position < end);
+
+  const refRegex = /@(\S+)/g;
+  let result = "";
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = refRegex.exec(text)) !== null) {
+    if (isInsideBacktick(match.index)) continue;
 
     const refPath = match[1];
     const resolvedPath = isAbsolute(refPath)
       ? refPath
       : resolve(baseDir, refPath);
-    if (!existsSync(resolvedPath)) {
-      result.push(line);
-      continue;
-    }
+    if (!existsSync(resolvedPath)) continue;
 
     try {
       const refContent = readFileSync(resolvedPath, "utf-8");
-      result.push(expandAtRefs(refContent, dirname(resolvedPath), depth + 1));
+      const expanded = expandAtRefs(refContent, dirname(resolvedPath), depth + 1);
+      result += text.slice(lastIndex, match.index) + expanded;
+      lastIndex = match.index + match[0].length;
     } catch {
-      result.push(line);
+      // Leave unreadable references unchanged.
     }
   }
 
-  return result.join("\n");
+  return result + text.slice(lastIndex);
+}
+
+function inlineBacktickRanges(text: string): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  const backtickRegex = /`[^`]*`/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = backtickRegex.exec(text)) !== null) {
+    ranges.push([match.index, match.index + match[0].length]);
+  }
+
+  return ranges;
 }
 
 export function replaceBlockContent(

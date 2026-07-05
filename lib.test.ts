@@ -47,11 +47,22 @@ describe("expandAtRefs", () => {
     expect(expandAtRefs(input, testDir)).toBe("first\nsecond");
   });
 
-  it("leaves @path inside a sentence unchanged", () => {
+  it("expands @path inside a sentence", () => {
     const refPath = join(testDir, "sentence_ref.txt");
-    writeFileSync(refPath, "should not appear");
+    writeFileSync(refPath, "inline content");
     const input = `Consider the file @${refPath} for reference.`;
-    expect(expandAtRefs(input, testDir)).toBe(input);
+    expect(expandAtRefs(input, testDir)).toBe(
+      "Consider the file inline content for reference.",
+    );
+  });
+
+  it("expands multiple @path references on one line", () => {
+    const ref1 = join(testDir, "inline_multi1.txt");
+    const ref2 = join(testDir, "inline_multi2.txt");
+    writeFileSync(ref1, "first");
+    writeFileSync(ref2, "second");
+    const input = `Read @${ref1} and @${ref2}`;
+    expect(expandAtRefs(input, testDir)).toBe("Read first and second");
   });
 
   it("leaves @path inside backticks unchanged", () => {
