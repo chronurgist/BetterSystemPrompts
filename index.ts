@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
-  ancestorDirs,
   buildLocalBlock,
   expandAtRefs,
   insertAfterBlock,
+  largeFileWarning,
   replaceBlockContent,
+  rootToLeafDirs,
   stripHtmlComments,
-  warnIfLarge,
 } from "./lib";
 
 const LOCAL_FILENAME = "AGENTS.local.md";
@@ -55,7 +55,7 @@ export default function agentsLocalSupportExtension(
     }
 
     const contextDirs = contextFiles.map((file) => dirname(file.path));
-    const cwdDirs = ancestorDirs(event.systemPromptOptions.cwd);
+    const cwdDirs = rootToLeafDirs(event.systemPromptOptions.cwd);
     const localDirs = [...new Set([...contextDirs, ...cwdDirs])];
 
     for (const dir of localDirs) {
@@ -64,7 +64,8 @@ export default function agentsLocalSupportExtension(
 
       try {
         const raw = readFileSync(localPath, "utf-8");
-        warnIfLarge(localPath, raw);
+        const warning = largeFileWarning(localPath, raw);
+        if (warning) console.warn(warning);
         const stripped = stripHtmlComments(raw);
         const expanded = expandAtRefs(stripped, dirname(localPath));
         const block = buildLocalBlock(localPath, expanded);

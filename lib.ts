@@ -5,12 +5,7 @@ import { dirname, isAbsolute, join, parse, resolve } from "node:path";
 export const MAX_DEPTH = 4;
 export const SIZE_WARNING_THRESHOLD = 200;
 
-export interface ContextFile {
-  path: string;
-  content: string;
-}
-
-export function escapeRegex(value: string): string {
+function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -28,13 +23,14 @@ export function stripHtmlComments(content: string): string {
   );
 }
 
-export function warnIfLarge(filePath: string, content: string): void {
+export function largeFileWarning(
+  filePath: string,
+  content: string,
+): string | undefined {
   const lineCount = content.split("\n").length;
-  if (lineCount > SIZE_WARNING_THRESHOLD) {
-    console.warn(
-      `[better-system-prompts] ${filePath} has ${lineCount} lines (>200). Consider splitting into smaller files.`,
-    );
-  }
+  if (lineCount <= SIZE_WARNING_THRESHOLD) return;
+
+  return `[better-system-prompts] ${filePath} has ${lineCount} lines (>200). Consider splitting into smaller files.`;
 }
 
 function mapProseSegments(
@@ -77,25 +73,18 @@ export function expandAtRefs(
 ): string {
   if (depth > MAX_DEPTH) return content;
 
-  const lines = content.split("\n");
-  const result: string[] = [];
-  let inFence = false;
+  return mapProseLines(content, (line) =>
+    expandInlineRefs(line, baseDir, depth),
+  );
+}
 
-  for (const line of lines) {
-    if (line.trimStart().startsWith("```")) {
-      inFence = !inFence;
-      result.push(line);
-      continue;
-    }
-    if (inFence) {
-      result.push(line);
-      continue;
-    }
-
-    result.push(expandInlineRefs(line, baseDir, depth));
-  }
-
-  return result.join("\n");
+function mapProseLines(
+  content: string,
+  transform: (line: string) => string,
+): string {
+  return mapProseSegments(content, (text) =>
+    text.split("\n").map(transform).join("\n"),
+  );
 }
 
 function expandInlineRefs(
@@ -119,7 +108,8 @@ function expandInlineRefs(
 
     try {
       const rawRefContent = readFileSync(resolvedPath, "utf-8");
-      warnIfLarge(resolvedPath, rawRefContent);
+      const warning = largeFileWarning(resolvedPath, rawRefContent);
+      if (warning) console.warn(warning);
       const refContent = stripHtmlComments(rawRefContent);
       const expanded = expandAtRefs(
         refContent,
@@ -177,7 +167,7 @@ export function buildLocalBlock(localPath: string, content: string): string {
   return `<project_instructions path="${localPath}">\n${content}\n</project_instructions>\n\n`;
 }
 
-export function ancestorDirs(cwd: string): string[] {
+export function rootToLeafDirs(cwd: string): string[] {
   const dirs: string[] = [];
   let current = resolve(cwd);
   const root = parse(current).root;
