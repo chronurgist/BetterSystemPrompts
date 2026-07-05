@@ -1,6 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
   ancestorDirs,
   buildLocalBlock,
@@ -13,7 +12,35 @@ import {
 
 const LOCAL_FILENAME = "AGENTS.local.md";
 
-export default function agentsLocalSupportExtension(pi: ExtensionAPI): void {
+interface ContextFile {
+  path: string;
+  content: string;
+}
+
+interface BeforeAgentStartEvent {
+  systemPrompt: string;
+  systemPromptOptions: {
+    cwd: string;
+    contextFiles?: ContextFile[];
+  };
+}
+
+type BeforeAgentStartResult = { systemPrompt: string };
+
+type BeforeAgentStartHandler = (
+  event: BeforeAgentStartEvent,
+) =>
+  | BeforeAgentStartResult
+  | undefined
+  | Promise<BeforeAgentStartResult | undefined>;
+
+interface BeforeAgentStartApi {
+  on(event: "before_agent_start", handler: BeforeAgentStartHandler): void;
+}
+
+export default function agentsLocalSupportExtension(
+  pi: BeforeAgentStartApi,
+): void {
   pi.on("before_agent_start", async (event) => {
     const contextFiles = event.systemPromptOptions.contextFiles ?? [];
 

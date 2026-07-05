@@ -10,10 +10,7 @@ import {
   resolveRefPath,
   stripHtmlComments,
 } from "./lib";
-
-// ---------------------------------------------------------------------------
-// expandAtRefs — file-backed tests using a temporary directory
-// ---------------------------------------------------------------------------
+import { captureWarnings } from "./test-helpers";
 
 const testDir = join(tmpdir(), `better-system-prompts-test-${process.pid}`);
 
@@ -187,15 +184,9 @@ describe("expandAtRefs", () => {
       refPath,
       Array.from({ length: 201 }, () => "line").join("\n"),
     );
-    const originalWarn = console.warn;
-    const warnings: unknown[][] = [];
-    console.warn = (...args: unknown[]) => warnings.push(args);
-
-    try {
-      expandAtRefs(`@${refPath}`, testDir);
-    } finally {
-      console.warn = originalWarn;
-    }
+    const { warnings } = captureWarnings(() =>
+      expandAtRefs(`@${refPath}`, testDir),
+    );
 
     expect(warnings).toEqual([
       [
@@ -204,10 +195,6 @@ describe("expandAtRefs", () => {
     ]);
   });
 });
-
-// ---------------------------------------------------------------------------
-// stripHtmlComments
-// ---------------------------------------------------------------------------
 
 describe("stripHtmlComments", () => {
   it("strips single-line HTML comments", () => {
@@ -232,10 +219,6 @@ describe("stripHtmlComments", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// resolveRefPath
-// ---------------------------------------------------------------------------
-
 describe("resolveRefPath", () => {
   it("resolves ~/ paths from the home directory", () => {
     expect(resolveRefPath("~/instructions.md", testDir)).toBe(
@@ -247,10 +230,6 @@ describe("resolveRefPath", () => {
     expect(resolveRefPath("~foo", testDir)).toBe(join(testDir, "~foo"));
   });
 });
-
-// ---------------------------------------------------------------------------
-// replaceBlockContent
-// ---------------------------------------------------------------------------
 
 describe("replaceBlockContent", () => {
   it("replaces content between project_instructions tags", () => {
@@ -297,10 +276,6 @@ describe("replaceBlockContent", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// insertAfterBlock
-// ---------------------------------------------------------------------------
-
 describe("insertAfterBlock", () => {
   it("inserts content after the matching block", () => {
     const prompt =
@@ -332,10 +307,6 @@ describe("insertAfterBlock", () => {
     );
   });
 });
-
-// ---------------------------------------------------------------------------
-// buildLocalBlock
-// ---------------------------------------------------------------------------
 
 describe("buildLocalBlock", () => {
   it("builds a project_instructions block with content", () => {

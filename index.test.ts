@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import agentsLocalSupportExtension from "./index";
+import { captureWarningsAsync } from "./test-helpers";
 
 type BeforeAgentStartHandler = (event: {
   systemPrompt: string;
@@ -19,10 +20,10 @@ beforeEach(() => {
   testDir = mkdtempSync(join(tmpdir(), "agents-local-support-index-test-"));
 
   agentsLocalSupportExtension({
-    on(eventName: string, registeredHandler: BeforeAgentStartHandler) {
+    on(eventName, registeredHandler) {
       if (eventName === "before_agent_start") handler = registeredHandler;
     },
-  } as never);
+  });
 });
 
 afterEach(() => {
@@ -117,18 +118,12 @@ describe("agentsLocalSupportExtension", () => {
       localPath,
       Array.from({ length: 201 }, () => "line").join("\n"),
     );
-    const originalWarn = console.warn;
-    const warnings: unknown[][] = [];
-    console.warn = (...args: unknown[]) => warnings.push(args);
-
-    try {
-      await handler({
+    const { warnings } = await captureWarningsAsync(() =>
+      handler({
         systemPrompt: "base prompt",
         systemPromptOptions: { cwd: testDir, contextFiles: [] },
-      });
-    } finally {
-      console.warn = originalWarn;
-    }
+      }),
+    );
 
     expect(warnings).toEqual([
       [
