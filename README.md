@@ -65,7 +65,8 @@ pi install git:github.com/chronurgist/BetterSystemPrompts
 From a local checkout:
 
 ```bash
-pi install ./path/to/agents-local-support
+git clone https://github.com/chronurgist/BetterSystemPrompts.git
+pi install ./BetterSystemPrompts
 ```
 
 Or try it for one run:
