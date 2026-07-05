@@ -8,6 +8,7 @@ import {
   replaceBlockContent,
   rootToLeafDirs,
   stripHtmlComments,
+  type WarnFn,
 } from "./lib";
 
 const LOCAL_FILENAME = "AGENTS.local.md";
@@ -29,10 +30,18 @@ type BeforeAgentStartResult = { systemPrompt: string };
 
 type BeforeAgentStartHandler = (
   event: BeforeAgentStartEvent,
+  ctx?: BeforeAgentStartContext,
 ) =>
   | BeforeAgentStartResult
   | undefined
   | Promise<BeforeAgentStartResult | undefined>;
+
+interface BeforeAgentStartContext {
+  hasUI: boolean;
+  ui: {
+    notify(message: string, type?: "info" | "warning" | "error"): void;
+  };
+}
 
 interface BeforeAgentStartApi {
   on(event: "before_agent_start", handler: BeforeAgentStartHandler): void;
@@ -41,14 +50,18 @@ interface BeforeAgentStartApi {
 export default function agentsLocalSupportExtension(
   pi: BeforeAgentStartApi,
 ): void {
-  pi.on("before_agent_start", async (event) => {
+  pi.on("before_agent_start", async (event, ctx) => {
     const contextFiles = event.systemPromptOptions.contextFiles ?? [];
 
     let systemPrompt = event.systemPrompt;
 
+    const warn: WarnFn = ctx?.hasUI
+      ? (message) => ctx.ui.notify(message, "warning")
+      : (message) => console.warn(message);
+
     for (const file of contextFiles) {
       const stripped = stripHtmlComments(file.content);
-      const expanded = expandAtRefs(stripped, dirname(file.path));
+      const expanded = expandAtRefs(stripped, dirname(file.path), 0, warn);
       if (expanded !== file.content) {
         systemPrompt = replaceBlockContent(systemPrompt, file.path, expanded);
       }
@@ -62,7 +75,7 @@ export default function agentsLocalSupportExtension(
       const localPath = join(dir, LOCAL_FILENAME);
       if (!existsSync(localPath)) continue;
 
-      const expanded = loadAndExpand(localPath, dirname(localPath));
+      const expanded = loadAndExpand(localPath, dirname(localPath), 0, warn);
       if (expanded === undefined) continue;
       const block = buildLocalBlock(localPath, expanded);
       const matchingContextFile = contextFiles.find(

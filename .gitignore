@@ -7,7 +7,6 @@
 !lib.ts
 !lib.test.ts
 !index.test.ts
-!test-helpers.ts
 !bun.lock
 !README.md
 !LICENSE

@@ -10,7 +10,6 @@ import {
   resolveRefPath,
   stripHtmlComments,
 } from "./lib";
-import { captureWarnings } from "./test-helpers";
 
 const testDir = join(tmpdir(), `better-system-prompts-test-${process.pid}`);
 
@@ -178,20 +177,17 @@ describe("expandAtRefs", () => {
     expect(expandAtRefs(`@${refPath}`, testDir)).toBe("visible  text");
   });
 
-  it("warns when an inlined reference exceeds 200 lines", async () => {
+  it("warns when an inlined reference exceeds 200 lines", () => {
     const refPath = join(testDir, "large_ref.txt");
     writeFileSync(
       refPath,
       Array.from({ length: 201 }, () => "line").join("\n"),
     );
-    const { warnings } = await captureWarnings(() =>
-      expandAtRefs(`@${refPath}`, testDir),
-    );
+    const warnings: string[] = [];
+    expandAtRefs(`@${refPath}`, testDir, 0, (m) => warnings.push(m));
 
     expect(warnings).toEqual([
-      [
-        `[better-system-prompts] ${refPath} has 201 lines (>200). Consider splitting into smaller files.`,
-      ],
+      `[better-system-prompts] ${refPath} has 201 lines (>200). Consider splitting into smaller files.`,
     ]);
   });
 });

@@ -63,7 +63,7 @@ A few behaviors that match Claude Code but aren't obvious from the feature list:
 - **Missing or unreadable references are left as-is.** A path that doesn't exist, or points at a directory, stays literal (`@./missing.txt` stays `@./missing.txt`). No error is raised.
 - **Recursion caps at 4 hops.** A reference nested 5 deep is left literal as `@...`, not expanded.
 - **HTML comments are stripped from every loaded memory file** — context files, `AGENTS.local.md`, and `@path`-imported files — before they reach the model. Comments inside fenced code blocks (` ``` `) are preserved. This matches Claude Code, which strips `<!-- ... -->` from CLAUDE.md content to save context tokens.
-- **The 200-line warning is advisory only.** Files longer than 200 lines log a warning to stderr; nothing is truncated or refused. Whether the warning is visible depends on how you run Pi (it may not surface in the TUI).
+- **The 200-line warning is advisory only.** Files longer than 200 lines raise a temporary warning notification in the Pi TUI; nothing is truncated or refused. In headless mode (`pi -p` / JSON) the warning falls back to stderr, where it may not be visible.
 - **A `AGENTS.local.md` with no companion context file is appended to the end** of the prompt rather than inserted after a block.
 
 ## Install

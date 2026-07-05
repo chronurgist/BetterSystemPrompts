@@ -3,15 +3,20 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import agentsLocalSupportExtension from "./index";
-import { captureWarnings } from "./test-helpers";
 
-type BeforeAgentStartHandler = (event: {
-  systemPrompt: string;
-  systemPromptOptions: {
-    cwd: string;
-    contextFiles?: Array<{ path: string; content: string }>;
-  };
-}) => Promise<{ systemPrompt: string } | undefined>;
+type BeforeAgentStartHandler = (
+  event: {
+    systemPrompt: string;
+    systemPromptOptions: {
+      cwd: string;
+      contextFiles?: Array<{ path: string; content: string }>;
+    };
+  },
+  ctx?: {
+    hasUI: boolean;
+    ui: { notify: (message: string, type?: string) => void };
+  },
+) => Promise<{ systemPrompt: string } | undefined>;
 
 let testDir: string;
 let handler: BeforeAgentStartHandler;
@@ -121,17 +126,17 @@ describe("agentsLocalSupportExtension", () => {
       localPath,
       Array.from({ length: 201 }, () => "line").join("\n"),
     );
-    const { warnings } = await captureWarnings(() =>
-      handler({
+    const warnings: string[] = [];
+    await handler(
+      {
         systemPrompt: "base prompt",
         systemPromptOptions: { cwd: testDir, contextFiles: [] },
-      }),
+      },
+      { hasUI: true, ui: { notify: (m) => warnings.push(m) } },
     );
 
     expect(warnings).toEqual([
-      [
-        `[better-system-prompts] ${localPath} has 201 lines (>200). Consider splitting into smaller files.`,
-      ],
+      `[better-system-prompts] ${localPath} has 201 lines (>200). Consider splitting into smaller files.`,
     ]);
   });
 });

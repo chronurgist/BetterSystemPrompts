@@ -5,6 +5,10 @@ import { dirname, isAbsolute, join, parse, resolve } from "node:path";
 export const MAX_DEPTH = 4;
 export const SIZE_WARNING_THRESHOLD = 200;
 
+export type WarnFn = (message: string) => void;
+
+const defaultWarn: WarnFn = (message) => console.warn(message);
+
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -70,11 +74,12 @@ export function expandAtRefs(
   content: string,
   baseDir: string,
   depth = 0,
+  warn: WarnFn = defaultWarn,
 ): string {
   if (depth > MAX_DEPTH) return content;
 
   return mapProseLines(content, (line) =>
-    expandInlineRefs(line, baseDir, depth),
+    expandInlineRefs(line, baseDir, depth, warn),
   );
 }
 
@@ -82,13 +87,14 @@ export function loadAndExpand(
   filePath: string,
   baseDir: string,
   depth = 0,
+  warn: WarnFn = defaultWarn,
 ): string | undefined {
   try {
     const raw = readFileSync(filePath, "utf-8");
     const warning = largeFileWarning(filePath, raw);
-    if (warning) console.warn(warning);
+    if (warning) warn(warning);
     const content = stripHtmlComments(raw);
-    return expandAtRefs(content, baseDir, depth);
+    return expandAtRefs(content, baseDir, depth, warn);
   } catch {
     // Leave unreadable files unchanged.
   }
@@ -107,6 +113,7 @@ function expandInlineRefs(
   text: string,
   baseDir: string,
   depth: number,
+  warn: WarnFn,
 ): string {
   const backtickRanges = inlineBacktickRanges(text);
   const isInsideBacktick = (position: number) =>
@@ -126,6 +133,7 @@ function expandInlineRefs(
       resolvedPath,
       dirname(resolvedPath),
       depth + 1,
+      warn,
     );
     if (expanded === undefined) continue;
     result += text.slice(lastIndex, match.index) + expanded;
