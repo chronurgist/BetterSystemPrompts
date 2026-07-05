@@ -1,7 +1,7 @@
 {
-  "name": "agents-local-support",
+  "name": "better-system-prompts",
   "version": "0.1.0",
-  "description": "Pi extension that expands @file references in context files and injects AGENTS.local.md instructions.",
+  "description": "Pi extension that expands @file references in context files and injects AGENTS.local.md for per-project instructions.",
   "license": "Apache-2.0",
   "keywords": [
     "pi-package",
