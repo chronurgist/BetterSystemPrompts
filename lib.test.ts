@@ -172,12 +172,10 @@ describe("expandAtRefs", () => {
     expect(expandAtRefs(input, subDir)).toBe("deeply nested");
   });
 
-  it("preserves HTML comments in inlined references", () => {
+  it("strips HTML comments from inlined references", () => {
     const refPath = join(testDir, "commented_ref.txt");
     writeFileSync(refPath, "visible <!-- hidden --> text");
-    expect(expandAtRefs(`@${refPath}`, testDir)).toBe(
-      "visible <!-- hidden --> text",
-    );
+    expect(expandAtRefs(`@${refPath}`, testDir)).toBe("visible  text");
   });
 
   it("warns when an inlined reference exceeds 200 lines", async () => {

@@ -81,14 +81,14 @@ export function expandAtRefs(
 export function loadAndExpand(
   filePath: string,
   baseDir: string,
-  options: { strip?: boolean; depth?: number } = {},
+  depth = 0,
 ): string | undefined {
   try {
     const raw = readFileSync(filePath, "utf-8");
     const warning = largeFileWarning(filePath, raw);
     if (warning) console.warn(warning);
-    const content = options.strip ? stripHtmlComments(raw) : raw;
-    return expandAtRefs(content, baseDir, options.depth ?? 0);
+    const content = stripHtmlComments(raw);
+    return expandAtRefs(content, baseDir, depth);
   } catch {
     // Leave unreadable files unchanged.
   }
@@ -122,9 +122,11 @@ function expandInlineRefs(
     const resolvedPath = resolveRefPath(refPath, baseDir);
     if (!existsSync(resolvedPath)) continue;
 
-    const expanded = loadAndExpand(resolvedPath, dirname(resolvedPath), {
-      depth: depth + 1,
-    });
+    const expanded = loadAndExpand(
+      resolvedPath,
+      dirname(resolvedPath),
+      depth + 1,
+    );
     if (expanded === undefined) continue;
     result += text.slice(lastIndex, match.index) + expanded;
     lastIndex = match.index + match[0].length;

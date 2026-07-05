@@ -62,9 +62,7 @@ export default function agentsLocalSupportExtension(
       const localPath = join(dir, LOCAL_FILENAME);
       if (!existsSync(localPath)) continue;
 
-      const expanded = loadAndExpand(localPath, dirname(localPath), {
-        strip: true,
-      });
+      const expanded = loadAndExpand(localPath, dirname(localPath));
       if (expanded === undefined) continue;
       const block = buildLocalBlock(localPath, expanded);
       const matchingContextFile = contextFiles.find(
