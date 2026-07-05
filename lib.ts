@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, isAbsolute, parse, resolve } from "node:path";
+import { homedir } from "node:os";
+import { dirname, isAbsolute, join, parse, resolve } from "node:path";
 
 export const MAX_DEPTH = 4;
 
@@ -10,6 +11,14 @@ export interface ContextFile {
 
 export function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function resolveRefPath(refPath: string, baseDir: string): string {
+  if (refPath.startsWith("~/")) {
+    return join(homedir(), refPath.slice(2));
+  }
+
+  return isAbsolute(refPath) ? refPath : resolve(baseDir, refPath);
 }
 
 export function expandAtRefs(
@@ -54,9 +63,7 @@ function expandInlineRefs(text: string, baseDir: string, depth: number): string 
     if (isInsideBacktick(match.index)) continue;
 
     const refPath = match[1];
-    const resolvedPath = isAbsolute(refPath)
-      ? refPath
-      : resolve(baseDir, refPath);
+    const resolvedPath = resolveRefPath(refPath, baseDir);
     if (!existsSync(resolvedPath)) continue;
 
     try {

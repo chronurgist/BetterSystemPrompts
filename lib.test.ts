@@ -1,12 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   buildLocalBlock,
   expandAtRefs,
   insertAfterBlock,
   replaceBlockContent,
+  resolveRefPath,
 } from "./lib";
 
 // ---------------------------------------------------------------------------
@@ -171,6 +172,22 @@ describe("expandAtRefs", () => {
     writeFileSync(middle, `@inner.txt`);
     const input = "@middle.txt";
     expect(expandAtRefs(input, subDir)).toBe("deeply nested");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveRefPath
+// ---------------------------------------------------------------------------
+
+describe("resolveRefPath", () => {
+  it("resolves ~/ paths from the home directory", () => {
+    expect(resolveRefPath("~/instructions.md", testDir)).toBe(
+      join(homedir(), "instructions.md"),
+    );
+  });
+
+  it("does not treat ~foo as a home path", () => {
+    expect(resolveRefPath("~foo", testDir)).toBe(join(testDir, "~foo"));
   });
 });
 
