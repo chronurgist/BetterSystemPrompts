@@ -4,7 +4,7 @@ Pi extension that adds Claude Code-style memory features: `@path` imports and `*
 
 ## What it does
 
-- Expands standalone `@path` references inside loaded context files before the agent starts.
+- Expands `@path` references (standalone or inline) inside loaded context files before the agent starts.
 - Looks for `AGENTS.local.md` next to each loaded context file.
 - Injects each local file as an additional `<project_instructions>` block after its matching context file.
 
@@ -26,7 +26,7 @@ From the Claude Code docs:
 
 This extension matches that behavior exactly:
 
-- Standalone `@path` lines are expanded to file contents
+- `@path` references are expanded inline (standalone or mid-sentence) to file contents
 - Relative paths resolve from the containing file's directory
 - Maximum recursion depth of 4
 - Skips `@path` inside fenced code blocks and backticks
