@@ -11,7 +11,7 @@ function escapeRegex(value: string): string {
 
 export function resolveRefPath(refPath: string, baseDir: string): string {
   if (refPath.startsWith("~/")) {
-    return join(homedir(), refPath.slice(2));
+    return join(homedir() ?? "", refPath.slice(2));
   }
 
   return isAbsolute(refPath) ? refPath : resolve(baseDir, refPath);
