@@ -7,6 +7,7 @@ import {
   expandAtRefs,
   insertAfterBlock,
   replaceBlockContent,
+  stripHtmlComments,
 } from "./lib";
 
 const LOCAL_FILENAME = "AGENTS.local.md";
@@ -18,7 +19,8 @@ export default function agentsLocalSupportExtension(pi: ExtensionAPI): void {
     let systemPrompt = event.systemPrompt;
 
     for (const file of contextFiles) {
-      const expanded = expandAtRefs(file.content, dirname(file.path));
+      const stripped = stripHtmlComments(file.content);
+      const expanded = expandAtRefs(stripped, dirname(file.path));
       if (expanded !== file.content) {
         systemPrompt = replaceBlockContent(systemPrompt, file.path, expanded);
       }
@@ -34,7 +36,8 @@ export default function agentsLocalSupportExtension(pi: ExtensionAPI): void {
 
       try {
         const raw = readFileSync(localPath, "utf-8");
-        const expanded = expandAtRefs(raw, dirname(localPath));
+        const stripped = stripHtmlComments(raw);
+        const expanded = expandAtRefs(stripped, dirname(localPath));
         const block = buildLocalBlock(localPath, expanded);
         const matchingContextFile = contextFiles.find(
           (file) => dirname(file.path) === dir,

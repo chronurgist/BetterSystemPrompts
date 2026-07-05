@@ -21,6 +21,41 @@ export function resolveRefPath(refPath: string, baseDir: string): string {
   return isAbsolute(refPath) ? refPath : resolve(baseDir, refPath);
 }
 
+export function stripHtmlComments(content: string): string {
+  return mapProseSegments(content, (text) => text.replace(/<!--[\s\S]*?-->/g, ""));
+}
+
+function mapProseSegments(
+  content: string,
+  transform: (text: string) => string,
+): string {
+  const chunks = content.match(/.*(?:\n|$)/g) ?? [];
+  const segments: Array<{ text: string; inFence: boolean }> = [];
+  let current: string[] = [];
+  let inFence = false;
+
+  for (const chunk of chunks) {
+    if (chunk === "") continue;
+
+    const chunkInFence = inFence;
+    current.push(chunk);
+
+    if (chunk.trimStart().startsWith("```")) {
+      segments.push({ text: current.join(""), inFence: chunkInFence });
+      current = [];
+      inFence = !inFence;
+    }
+  }
+
+  if (current.length > 0) {
+    segments.push({ text: current.join(""), inFence });
+  }
+
+  return segments
+    .map((segment) => (segment.inFence ? segment.text : transform(segment.text)))
+    .join("");
+}
+
 export function expandAtRefs(
   content: string,
   baseDir: string,
@@ -67,7 +102,7 @@ function expandInlineRefs(text: string, baseDir: string, depth: number): string 
     if (!existsSync(resolvedPath)) continue;
 
     try {
-      const refContent = readFileSync(resolvedPath, "utf-8");
+      const refContent = stripHtmlComments(readFileSync(resolvedPath, "utf-8"));
       const expanded = expandAtRefs(refContent, dirname(resolvedPath), depth + 1);
       result += text.slice(lastIndex, match.index) + expanded;
       lastIndex = match.index + match[0].length;

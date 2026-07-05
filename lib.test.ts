@@ -8,6 +8,7 @@ import {
   insertAfterBlock,
   replaceBlockContent,
   resolveRefPath,
+  stripHtmlComments,
 } from "./lib";
 
 // ---------------------------------------------------------------------------
@@ -172,6 +173,37 @@ describe("expandAtRefs", () => {
     writeFileSync(middle, `@inner.txt`);
     const input = "@middle.txt";
     expect(expandAtRefs(input, subDir)).toBe("deeply nested");
+  });
+
+  it("strips HTML comments from inlined references", () => {
+    const refPath = join(testDir, "commented_ref.txt");
+    writeFileSync(refPath, "visible <!-- hidden --> text");
+    expect(expandAtRefs(`@${refPath}`, testDir)).toBe("visible  text");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// stripHtmlComments
+// ---------------------------------------------------------------------------
+
+describe("stripHtmlComments", () => {
+  it("strips single-line HTML comments", () => {
+    expect(stripHtmlComments("Hello <!-- note --> world")).toBe("Hello  world");
+  });
+
+  it("strips multiline HTML comments", () => {
+    expect(stripHtmlComments("Hello <!--\nnote\n--> world")).toBe(
+      "Hello  world",
+    );
+  });
+
+  it("strips multiple comments in one file", () => {
+    expect(stripHtmlComments("<!-- a -->text<!-- b -->")).toBe("text");
+  });
+
+  it("preserves HTML comments inside fenced code blocks", () => {
+    const input = "Before\n```\n<!-- keep -->\n```\nAfter <!-- drop -->";
+    expect(stripHtmlComments(input)).toBe("Before\n```\n<!-- keep -->\n```\nAfter ");
   });
 });
 

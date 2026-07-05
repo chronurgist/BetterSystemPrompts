@@ -79,4 +79,32 @@ describe("agentsLocalSupportExtension", () => {
         `<other>later</other>`,
     );
   });
+
+  it("strips HTML comments from AGENTS.local.md", async () => {
+    writeFileSync(join(testDir, "AGENTS.local.md"), "visible <!-- hidden --> text");
+
+    const result = await handler({
+      systemPrompt: "base prompt",
+      systemPromptOptions: { cwd: testDir, contextFiles: [] },
+    });
+
+    expect(result?.systemPrompt).toContain("visible  text");
+    expect(result?.systemPrompt).not.toContain("hidden");
+  });
+
+  it("strips HTML comments from loaded context files", async () => {
+    const agentsPath = join(testDir, "AGENTS.md");
+    const content = "project <!-- hidden --> instructions";
+
+    const result = await handler({
+      systemPrompt: `<project_instructions path="${agentsPath}">\n${content}\n</project_instructions>`,
+      systemPromptOptions: {
+        cwd: testDir,
+        contextFiles: [{ path: agentsPath, content }],
+      },
+    });
+
+    expect(result?.systemPrompt).toContain("project  instructions");
+    expect(result?.systemPrompt).not.toContain("hidden");
+  });
 });
