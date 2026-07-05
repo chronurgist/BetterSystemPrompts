@@ -17,12 +17,16 @@
     "@earendil-works/pi-coding-agent": "*"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.2",
     "@earendil-works/pi-coding-agent": "^0.80.3",
     "@types/bun": "^1.3.0"
   },
   "scripts": {
     "test": "bun test",
-    "test:watch": "bun test --watch"
+    "test:watch": "bun test --watch",
+    "check": "biome check .",
+    "format": "biome format . --write",
+    "lint": "biome lint . --write"
   },
   "pi": {
     "extensions": [

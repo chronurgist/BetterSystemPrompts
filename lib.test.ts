@@ -1,7 +1,7 @@
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import {
   buildLocalBlock,
   expandAtRefs,
@@ -13,7 +13,7 @@ import {
 // expandAtRefs — file-backed tests using a temporary directory
 // ---------------------------------------------------------------------------
 
-const testDir = join(tmpdir(), "better-system-prompts-test-" + process.pid);
+const testDir = join(tmpdir(), `better-system-prompts-test-${process.pid}`);
 
 beforeAll(() => {
   mkdirSync(testDir, { recursive: true });
@@ -57,21 +57,21 @@ describe("expandAtRefs", () => {
   it("leaves @path inside backticks unchanged", () => {
     const refPath = join(testDir, "btick_ref.txt");
     writeFileSync(refPath, "leaked");
-    const input = "Use `@" + refPath + "` as a reference.";
+    const input = `Use \`@${refPath}\` as a reference.`;
     expect(expandAtRefs(input, testDir)).toBe(input);
   });
 
   it("leaves @path with trailing characters unchanged", () => {
     const refPath = join(testDir, "trailing.txt");
     writeFileSync(refPath, "content");
-    const input = "@" + refPath + ",";
+    const input = `@${refPath},`;
     expect(expandAtRefs(input, testDir)).toBe(input);
   });
 
   it("does not expand references inside fenced code blocks", () => {
     const refPath = join(testDir, "secret.txt");
     writeFileSync(refPath, "should not appear");
-    const input = "Before\n```\n@" + refPath + "\n```\nAfter";
+    const input = `Before\n\`\`\`\n@${refPath}\n\`\`\`\nAfter`;
     const result = expandAtRefs(input, testDir);
     expect(result).toBe(input);
   });
@@ -79,13 +79,13 @@ describe("expandAtRefs", () => {
   it("toggles back out of fenced code blocks after closing fence", () => {
     const refPath = join(testDir, "after_fence.txt");
     writeFileSync(refPath, "expanded");
-    const input = "```\nsome code\n```\n@" + refPath;
+    const input = `\`\`\`\nsome code\n\`\`\`\n@${refPath}`;
     const result = expandAtRefs(input, testDir);
     expect(result).toBe("```\nsome code\n```\nexpanded");
   });
 
   it("resolves relative paths from baseDir", () => {
-    const subDir = join(testDir, "sub_" + process.pid);
+    const subDir = join(testDir, `sub_${process.pid}`);
     mkdirSync(subDir, { recursive: true });
     writeFileSync(join(subDir, "ref.txt"), "from sub");
     const input = "@ref.txt";
@@ -95,7 +95,7 @@ describe("expandAtRefs", () => {
   it("resolves absolute paths", () => {
     const refPath = join(testDir, "abs.txt");
     writeFileSync(refPath, "absolute content");
-    const input = "@" + refPath;
+    const input = `@${refPath}`;
     expect(expandAtRefs(input, testDir)).toBe("absolute content");
   });
 
@@ -139,7 +139,7 @@ describe("expandAtRefs", () => {
   it("leaves directory paths (unreadable as text) unchanged", () => {
     const dirPath = join(testDir, "a_directory");
     mkdirSync(dirPath, { recursive: true });
-    const input = "@" + dirPath;
+    const input = `@${dirPath}`;
     expect(expandAtRefs(input, testDir)).toBe(input);
   });
 
@@ -152,7 +152,7 @@ describe("expandAtRefs", () => {
   });
 
   it("expands references recursively from different base directories", () => {
-    const subDir = join(testDir, "nested_" + process.pid);
+    const subDir = join(testDir, `nested_${process.pid}`);
     mkdirSync(subDir, { recursive: true });
     const inner = join(subDir, "inner.txt");
     writeFileSync(inner, "deeply nested");
