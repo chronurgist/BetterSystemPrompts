@@ -96,7 +96,7 @@ describe("agentsLocalSupportExtension", () => {
     expect(result?.systemPrompt).not.toContain("hidden");
   });
 
-  it("preserves HTML comments in loaded context files", async () => {
+  it("strips HTML comments from loaded context files", async () => {
     const refPath = join(testDir, "ref.txt");
     writeFileSync(refPath, "expanded-ref");
     const agentsPath = join(testDir, "AGENTS.md");
@@ -110,7 +110,7 @@ describe("agentsLocalSupportExtension", () => {
       },
     });
 
-    expect(result?.systemPrompt).toContain("<!-- hidden -->");
+    expect(result?.systemPrompt).not.toContain("<!-- hidden -->");
     expect(result?.systemPrompt).toContain("expanded-ref");
     expect(result?.systemPrompt).not.toContain("@ref.txt");
   });

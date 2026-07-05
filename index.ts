@@ -7,6 +7,7 @@ import {
   loadAndExpand,
   replaceBlockContent,
   rootToLeafDirs,
+  stripHtmlComments,
 } from "./lib";
 
 const LOCAL_FILENAME = "AGENTS.local.md";
@@ -46,7 +47,8 @@ export default function agentsLocalSupportExtension(
     let systemPrompt = event.systemPrompt;
 
     for (const file of contextFiles) {
-      const expanded = expandAtRefs(file.content, dirname(file.path));
+      const stripped = stripHtmlComments(file.content);
+      const expanded = expandAtRefs(stripped, dirname(file.path));
       if (expanded !== file.content) {
         systemPrompt = replaceBlockContent(systemPrompt, file.path, expanded);
       }
