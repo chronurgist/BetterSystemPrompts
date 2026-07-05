@@ -2,6 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
+  ancestorDirs,
   buildLocalBlock,
   expandAtRefs,
   insertAfterBlock,
@@ -12,8 +13,7 @@ const LOCAL_FILENAME = "AGENTS.local.md";
 
 export default function agentsLocalSupportExtension(pi: ExtensionAPI): void {
   pi.on("before_agent_start", async (event) => {
-    const contextFiles = event.systemPromptOptions.contextFiles;
-    if (!contextFiles || contextFiles.length === 0) return;
+    const contextFiles = event.systemPromptOptions.contextFiles ?? [];
 
     let systemPrompt = event.systemPrompt;
 
@@ -24,15 +24,24 @@ export default function agentsLocalSupportExtension(pi: ExtensionAPI): void {
       }
     }
 
-    for (const file of contextFiles) {
-      const localPath = join(dirname(file.path), LOCAL_FILENAME);
+    const contextDirs = contextFiles.map((file) => dirname(file.path));
+    const cwdDirs = ancestorDirs(event.systemPromptOptions.cwd);
+    const localDirs = [...new Set([...contextDirs, ...cwdDirs])];
+
+    for (const dir of localDirs) {
+      const localPath = join(dir, LOCAL_FILENAME);
       if (!existsSync(localPath)) continue;
 
       try {
         const raw = readFileSync(localPath, "utf-8");
         const expanded = expandAtRefs(raw, dirname(localPath));
         const block = buildLocalBlock(localPath, expanded);
-        systemPrompt = insertAfterBlock(systemPrompt, file.path, block);
+        const matchingContextFile = contextFiles.find(
+          (file) => dirname(file.path) === dir,
+        );
+        systemPrompt = matchingContextFile
+          ? insertAfterBlock(systemPrompt, matchingContextFile.path, block)
+          : `${systemPrompt}\n${block}`;
       } catch {
         // Skip unreadable local files.
       }

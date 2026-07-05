@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, isAbsolute, resolve } from "node:path";
+import { dirname, isAbsolute, parse, resolve } from "node:path";
 
 export const MAX_DEPTH = 4;
 
@@ -89,4 +89,16 @@ export function insertAfterBlock(
 
 export function buildLocalBlock(localPath: string, content: string): string {
   return `<project_instructions path="${localPath}">\n${content}\n</project_instructions>\n\n`;
+}
+
+export function ancestorDirs(cwd: string): string[] {
+  const dirs: string[] = [];
+  let current = resolve(cwd);
+  const root = parse(current).root;
+
+  while (true) {
+    dirs.unshift(current);
+    if (current === root) return dirs;
+    current = dirname(current);
+  }
 }
