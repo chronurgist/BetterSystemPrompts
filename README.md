@@ -54,6 +54,18 @@ For a more complete Claude Code-style experience, pair this with:
   pi install git:github.com/joelhooks/pi-skill-interpolation
   ```
 
+## Quirks
+
+A few behaviors that match Claude Code but aren't obvious from the feature list:
+
+- **`@path` captures trailing punctuation.** The reference runs to the next whitespace, so `(@ref.txt)` tries to import a file literally named `ref.txt)`. If that file doesn't exist, the whole `(@ref.txt)` is left untouched — the paren isn't tidied up. To expand a path sitting next to punctuation, separate it with a space (`(@ref.txt )`). To keep any `@path` literal, wrap it in backticks (`` `@ref.txt` ``).
+- **`~` needs a slash.** `@~/instructions.md` resolves from your home directory; `@~foo` is treated as a relative path named `~foo`, not a home path.
+- **Missing or unreadable references are left as-is.** A path that doesn't exist, or points at a directory, stays literal (`@./missing.txt` stays `@./missing.txt`). No error is raised.
+- **Recursion caps at 4 hops.** A reference nested 5 deep is left literal as `@...`, not expanded.
+- **HTML comments are stripped from every loaded memory file** — context files, `AGENTS.local.md`, and `@path`-imported files — before they reach the model. Comments inside fenced code blocks (` ``` `) are preserved. This matches Claude Code, which strips `<!-- ... -->` from CLAUDE.md content to save context tokens.
+- **The 200-line warning is advisory only.** Files longer than 200 lines log a warning to stderr; nothing is truncated or refused. Whether the warning is visible depends on how you run Pi (it may not surface in the TUI).
+- **A `AGENTS.local.md` with no companion context file is appended to the end** of the prompt rather than inserted after a block.
+
 ## Install
 
 From GitHub:
