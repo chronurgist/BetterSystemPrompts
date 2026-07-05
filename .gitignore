@@ -5,4 +5,6 @@
 !package.json
 !lib.ts
 !lib.test.ts
-!vitest.config.ts
+!index.test.ts
+!bun.lock
+!README.md

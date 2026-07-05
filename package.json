@@ -1,14 +1,32 @@
 {
   "name": "agents-local-support",
-  "private": true,
-  "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.80.3"
+  "version": "0.1.0",
+  "description": "Pi extension that expands @file references in context files and injects AGENTS.local.md instructions.",
+  "keywords": [
+    "pi-package",
+    "pi-extension"
+  ],
+  "packageManager": "bun@1.3.14",
+  "type": "module",
+  "files": [
+    "README.md",
+    "index.ts",
+    "lib.ts"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
   },
   "devDependencies": {
-    "vitest": "^3.1.3"
+    "@earendil-works/pi-coding-agent": "^0.80.3",
+    "@types/bun": "^1.3.0"
   },
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "bun test",
+    "test:watch": "bun test --watch"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
   }
 }
