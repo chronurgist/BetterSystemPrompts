@@ -78,6 +78,22 @@ export function expandAtRefs(
   );
 }
 
+export function loadAndExpand(
+  filePath: string,
+  baseDir: string,
+  options: { strip?: boolean; depth?: number } = {},
+): string | undefined {
+  try {
+    const raw = readFileSync(filePath, "utf-8");
+    const warning = largeFileWarning(filePath, raw);
+    if (warning) console.warn(warning);
+    const content = options.strip ? stripHtmlComments(raw) : raw;
+    return expandAtRefs(content, baseDir, options.depth ?? 0);
+  } catch {
+    // Leave unreadable files unchanged.
+  }
+}
+
 function mapProseLines(
   content: string,
   transform: (line: string) => string,
@@ -106,20 +122,12 @@ function expandInlineRefs(
     const resolvedPath = resolveRefPath(refPath, baseDir);
     if (!existsSync(resolvedPath)) continue;
 
-    try {
-      const rawRefContent = readFileSync(resolvedPath, "utf-8");
-      const warning = largeFileWarning(resolvedPath, rawRefContent);
-      if (warning) console.warn(warning);
-      const expanded = expandAtRefs(
-        rawRefContent,
-        dirname(resolvedPath),
-        depth + 1,
-      );
-      result += text.slice(lastIndex, match.index) + expanded;
-      lastIndex = match.index + match[0].length;
-    } catch {
-      // Leave unreadable references unchanged.
-    }
+    const expanded = loadAndExpand(resolvedPath, dirname(resolvedPath), {
+      depth: depth + 1,
+    });
+    if (expanded === undefined) continue;
+    result += text.slice(lastIndex, match.index) + expanded;
+    lastIndex = match.index + match[0].length;
   }
 
   return result + text.slice(lastIndex);

@@ -1,13 +1,12 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
   buildLocalBlock,
   expandAtRefs,
   insertAfterBlock,
-  largeFileWarning,
+  loadAndExpand,
   replaceBlockContent,
   rootToLeafDirs,
-  stripHtmlComments,
 } from "./lib";
 
 const LOCAL_FILENAME = "AGENTS.local.md";
@@ -61,22 +60,17 @@ export default function agentsLocalSupportExtension(
       const localPath = join(dir, LOCAL_FILENAME);
       if (!existsSync(localPath)) continue;
 
-      try {
-        const raw = readFileSync(localPath, "utf-8");
-        const warning = largeFileWarning(localPath, raw);
-        if (warning) console.warn(warning);
-        const stripped = stripHtmlComments(raw);
-        const expanded = expandAtRefs(stripped, dirname(localPath));
-        const block = buildLocalBlock(localPath, expanded);
-        const matchingContextFile = contextFiles.find(
-          (file) => dirname(file.path) === dir,
-        );
-        systemPrompt = matchingContextFile
-          ? insertAfterBlock(systemPrompt, matchingContextFile.path, block)
-          : `${systemPrompt}\n${block}`;
-      } catch {
-        // Skip unreadable local files.
-      }
+      const expanded = loadAndExpand(localPath, dirname(localPath), {
+        strip: true,
+      });
+      if (expanded === undefined) continue;
+      const block = buildLocalBlock(localPath, expanded);
+      const matchingContextFile = contextFiles.find(
+        (file) => dirname(file.path) === dir,
+      );
+      systemPrompt = matchingContextFile
+        ? insertAfterBlock(systemPrompt, matchingContextFile.path, block)
+        : `${systemPrompt}\n${block}`;
     }
 
     if (systemPrompt === event.systemPrompt) return;
