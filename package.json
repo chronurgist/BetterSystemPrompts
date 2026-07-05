@@ -2,6 +2,7 @@
   "name": "agents-local-support",
   "version": "0.1.0",
   "description": "Pi extension that expands @file references in context files and injects AGENTS.local.md instructions.",
+  "license": "Apache-2.0",
   "keywords": [
     "pi-package",
     "pi-extension"
@@ -10,9 +11,18 @@
   "type": "module",
   "files": [
     "README.md",
+    "LICENSE",
     "index.ts",
     "lib.ts"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chronurgist/BetterSystemPrompts.git"
+  },
+  "homepage": "https://github.com/chronurgist/BetterSystemPrompts#readme",
+  "bugs": {
+    "url": "https://github.com/chronurgist/BetterSystemPrompts/issues"
+  },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
   },

@@ -8,4 +8,5 @@
 !index.test.ts
 !bun.lock
 !README.md
+!LICENSE
 !biome.json
